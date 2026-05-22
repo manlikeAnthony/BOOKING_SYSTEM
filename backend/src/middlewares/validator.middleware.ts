@@ -3,7 +3,6 @@ import { ObjectSchema } from "joi";
 import { CustomError } from "../errors/CustomError";
 import { HttpCodes } from "../errors/HttpCodes";
 import { AppCodes } from "../errors/AppCodes";
-import { Http } from "winston/lib/winston/transports";
 
 export const validate = (schema : ObjectSchema)=>{
     return (req:Request, _res : Response , next : NextFunction)=>{
