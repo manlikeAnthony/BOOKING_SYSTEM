@@ -1,0 +1,10 @@
+node_modules/
+dist/
+build/
+logs/
+coverage/
+.env
+.env.*
+*.log
+.early.coverage
+/src/generated/prisma

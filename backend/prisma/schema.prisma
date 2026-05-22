@@ -1,0 +1,277 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Hotel {
+  id      String  @id @default(uuid())
+  name    String
+  slug    String  @unique
+  email   String?
+  phone   String?
+  address String?
+
+  members           HotelMember[]
+  rooms             Room[]
+  guests            Guest[]
+  bookings          Booking[]
+  payments          Payment[]
+  housekeepingTasks HousekeepingTask[]
+  staffRequests  StaffRequest[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum Role {
+  SUPER_ADMIN
+  USER
+}
+
+model User {
+  id       String  @id @default(uuid())
+  name     String
+  email    String  @unique
+  password String
+  role     Role
+  isActive Boolean @default(true)
+
+  isVerified Boolean @default(false)
+
+  verificationToken String?
+  passwordToken     String?
+  passwordTokenExpirationDate DateTime?
+
+  tokens    Token[]
+  members   HotelMember[]
+  staffRequests  StaffRequest[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model HotelMember {
+  id       String @id @default(uuid())
+
+  userId   String
+  hotelId  String
+
+  role     HotelRole
+
+  user     User  @relation(fields: [userId], references: [id])
+  hotel    Hotel @relation(fields: [hotelId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, hotelId])
+}
+
+enum HotelRole {
+  OWNER
+  MANAGER
+  RECEPTIONIST
+}
+
+model StaffRequest {
+  id String @id @default(uuid())
+
+  userId String
+  hotelId String
+
+  requestedRole HotelRole
+
+  status RequestStatus @default(PENDING)
+
+  reviewedBy String?
+
+  reviewedAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  hotel Hotel @relation(fields: [hotelId], references: [id])
+
+  @@unique([userId, hotelId])
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model Token {
+  id           String   @id @default(uuid())
+
+  userId       String   @unique
+  user         User     @relation(fields: [userId], references: [id])
+
+  refreshToken String   @unique
+  isValid      Boolean  @default(true)
+
+  ip           String?
+  userAgent    String?
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+
+model Room {
+  id      String @id @default(uuid())
+  hotelId String
+
+  roomNumber String
+  price      Int
+  type       RoomType
+  capacity   Int
+
+  status RoomStatus @default(AVAILABLE)
+
+  hotel Hotel @relation(fields: [hotelId], references: [id])
+
+  bookings Booking[]
+  tasks    HousekeepingTask[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([hotelId, roomNumber])
+}
+
+enum RoomType {
+  STANDARD
+  DELUXE
+  SUITE
+  EXECUTIVE
+}
+
+enum RoomStatus {
+  AVAILABLE
+  OCCUPIED
+  CLEANING
+  MAINTENANCE
+  RESERVED
+}
+
+model Guest {
+  id      String @id @default(uuid())
+  hotelId String
+
+  fullName String
+  phone    String?
+  gender   String?
+  idType   String?
+  idNumber String?
+  notes    String?
+
+  hotel    Hotel     @relation(fields: [hotelId], references: [id])
+  bookings Booking[]
+
+  createdAt DateTime @default(now())
+}
+
+model Booking {
+  id      String @id @default(uuid())
+  hotelId String
+  guestId String
+  roomId  String
+
+  checkedInBy String?
+
+  status BookingStatus @default(PENDING)
+
+  bookingSource BookingSource
+
+  checkInDate          DateTime
+  expectedCheckoutDate DateTime?
+  actualCheckoutDate   DateTime?
+
+  totalAmount Int?
+
+  hotel Hotel @relation(fields: [hotelId], references: [id])
+  guest Guest @relation(fields: [guestId], references: [id])
+  room  Room  @relation(fields: [roomId], references: [id])
+
+  payments Payment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum BookingStatus {
+  PENDING
+  CHECKED_IN
+  CHECKED_OUT
+  CANCELLED
+  NO_SHOW
+}
+
+enum BookingSource {
+  WALK_IN
+  PHONE
+  WHATSAPP
+  ONLINE
+  AGENT
+}
+
+model Payment {
+  id        String @id @default(uuid())
+  hotelId   String
+  bookingId String
+
+  amount Int
+  method PaymentMethod
+  status PaymentStatus
+
+  reference  String?
+  receivedBy String?
+
+  paidAt DateTime?
+
+  hotel   Hotel   @relation(fields: [hotelId], references: [id])
+  booking Booking @relation(fields: [bookingId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+enum PaymentMethod {
+  CASH
+  TRANSFER
+  POS
+  ONLINE
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  PARTIAL
+  FAILED
+}
+
+model HousekeepingTask {
+  id         String  @id @default(uuid())
+  hotelId    String
+  roomId     String
+  assignedTo String?
+
+  status TaskStatus @default(PENDING)
+
+  notes       String?
+  completedAt DateTime?
+
+  hotel Hotel @relation(fields: [hotelId], references: [id])
+  room  Room  @relation(fields: [roomId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  DONE
+}
