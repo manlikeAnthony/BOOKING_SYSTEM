@@ -15,7 +15,7 @@ export const checkPermissions = (
       "Invalid authentication context",
     );
   }
-  if (requestUser.roles.includes("ADMIN")) return;
+  if (requestUser.role.includes("ADMIN")) return;
   if (requestUser.userId === resourseUserId) return;
 
   CustomError.throwError(
