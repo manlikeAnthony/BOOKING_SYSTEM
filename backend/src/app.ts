@@ -8,6 +8,7 @@ import { errorHandlerMiddleware } from "./middlewares/error-handler";
 
 // Routes
 import authRouter from "./modules/auth/auth.route";
+import hotelRouter from "./modules/Hotel/hotel.route";
 // import roomRouter from "./modules/rooms/rooms.route";
 // import bookingRouter from "./modules/bookings/bookings.route";
 
@@ -32,6 +33,7 @@ app.get("/api/v1", (_req: Request, res: Response) => {
 
 // Routes
 app.use("/api/v1/auth", authRouter);
+app.use("/api/v1/hotels", hotelRouter);
 // app.use("/api/v1/rooms", roomRouter);
 // app.use("/api/v1/bookings", bookingRouter);
 

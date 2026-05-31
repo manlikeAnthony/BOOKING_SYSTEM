@@ -69,7 +69,7 @@ model Token {
   id String @id @default(uuid())
 
   refreshToken String @unique
-  userId       String
+  userId       String @unique
 
   userAgent String?
   ip        String?

@@ -1,5 +1,4 @@
 import Joi from "joi";
-import { PassThrough } from "node:stream";
 
 export const registerSchema = Joi.object({
   name: Joi.string().trim().max(50).min(3).required().messages({

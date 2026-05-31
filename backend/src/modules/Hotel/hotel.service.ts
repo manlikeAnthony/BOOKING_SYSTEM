@@ -131,7 +131,7 @@ export const getHotelByIdService = async (hotelId: string) => {
   return hotel;
 };
 
-export const deleteHotelService = async (hotelId: string) => {
+export const deleteHotelService = async (hotelId: string , userId: string) => {
   const hotel = await prisma.hotel.findUnique({
     where: { id: hotelId },
   });
@@ -143,6 +143,21 @@ export const deleteHotelService = async (hotelId: string) => {
       "Hotel not found",
     );
   }
+  const membership = await prisma.hotelMember.findFirst({
+    where : {
+      hotelId,
+      userId,
+      role : "HOTEL_OWNER"
+    }
+  })
+
+if (!membership) {
+  CustomError.throwError(
+    HttpCodes.FORBIDDEN,
+    AppCodes.UNAUTHORIZED,
+    "You are not allowed to delete this hotel",
+  );
+}
 
   await prisma.hotel.delete({
     where: { id: hotelId },
@@ -153,6 +168,7 @@ export const deleteHotelService = async (hotelId: string) => {
 
 export const updateHotelService = async (
   hotelId: string,
+  userId: string,
   data: {
     name?: string;
     email?: string;
@@ -173,7 +189,23 @@ export const updateHotelService = async (
       "Hotel not found",
     );
   }
+  const membership = await prisma.hotelMember.findFirst({
+    where : {
+      hotelId,
+      userId,
+      in:{
+        role : ["HOTEL_OWNER", "MANAGER"]
+      }
+    }
+  })
 
+if (!membership) {
+  CustomError.throwError(
+    HttpCodes.FORBIDDEN,
+    AppCodes.UNAUTHORIZED,
+    "You are not allowed to update this hotel",
+  );
+}
   let slug: string | undefined;
 
   if (name && name !== hotel.name) {
