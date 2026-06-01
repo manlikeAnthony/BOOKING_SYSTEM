@@ -25,6 +25,7 @@ model Hotel {
   housekeepingTasks HousekeepingTask[]
   payments          Payment[]
   rooms             Room[]
+  joinRequests      HotelJoinRequest[]
 }
 
 model User {
@@ -33,7 +34,7 @@ model User {
   email    String @unique
   password String
 
-  roole    Role    @default(USER)
+  role    Role    @default(USER)
   isActive Boolean @default(true)
 
   isVerified Boolean @default(false)
@@ -47,6 +48,7 @@ model User {
 
   members HotelMember[]
   tokens       Token[]
+  joinRequests HotelJoinRequest[]
 }
 
 model HotelMember {
@@ -63,6 +65,22 @@ model HotelMember {
   createdAt DateTime @default(now())
 
   @@unique([userId, hotelId])
+}
+model HotelJoinRequest {
+  id        String @id @default(uuid())
+  hotelId   String
+  userId    String
+
+  roleRequested HotelRole
+
+  status    RequestStatus @default(PENDING)
+
+  createdAt DateTime @default(now())
+
+  hotel Hotel @relation(fields: [hotelId], references: [id])
+  user  User  @relation(fields: [userId], references: [id])
+
+  @@unique([hotelId, userId])
 }
 
 model Token {
@@ -174,7 +192,11 @@ enum HotelRole {
   ACCOUNTANT
   STAFF
 }
-
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
 enum RoomType {
   STANDARD
   DELUXE

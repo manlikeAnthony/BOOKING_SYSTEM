@@ -5,6 +5,7 @@ export type UserQuery = {
     search?: string;
     role?: string;
     status?: string;
+    name?: string;
   };
   pagination: {
     page: number;
@@ -52,6 +53,7 @@ export const parseUserQuery = (req : Request): UserQuery => {
       search: typeof search === "string" ? search.trim() : undefined,
       role: typeof role === "string" ? role : undefined,
       status: typeof status === "string" ? status : undefined,
+      name: typeof search === "string" ? search.trim() : undefined,
     },
     pagination: {
       page: Math.max(1, Number(page)),

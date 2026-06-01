@@ -34,7 +34,6 @@ export const createHotelController = async (req: Request, res: Response) => {
 };
 
 export const getAllHotelsController = async (req: Request, res: Response) => {
-  const userId = req.user.userId;
   const query = parseHotelQuery(req);
 
   const hotels = await getPublicHotelsService(query);

@@ -17,5 +17,6 @@ export type ResetPasswordPayload = {
 };
 
 export type Params = {
-    id: string
+    id: string,
+    userId: string,
 };
