@@ -3,6 +3,8 @@ import { CustomError } from "../../errors/CustomError";
 import { HttpCodes } from "../../errors/HttpCodes";
 import { AppCodes } from "../../errors/AppCodes";
 import { UserQuery} from "./user.query";
+import { checkPermissions } from "../../utils";
+import { TokenUser } from "../../types/token";
 
 export const getAllUsersService = async (query: UserQuery) => {
   const { filters, pagination, sort } = query;
@@ -45,7 +47,7 @@ export const getUserByIdService = async (userId: string) => {
   return user;
 };
 
-export const deleteUserService = async (userId: string) => {
+export const deleteUserService = async (requestUser: TokenUser, userId: string) => {
   const user = await prisma.user.findUnique({
     where: { id: userId },
   });
@@ -58,6 +60,7 @@ export const deleteUserService = async (userId: string) => {
     );
   }
 
+checkPermissions(requestUser, user.id);
 
   await prisma.user.delete({
     where: { id: userId },

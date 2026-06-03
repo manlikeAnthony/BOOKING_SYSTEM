@@ -17,7 +17,7 @@ import { emailQueue } from "../../queues/email.queue";
 export const registerController = async (req: Request, res: Response) => {
     const { user, verificationToken } = await registerService(req.body);
 
-    await emailQueue.add("sendVerificationEmail", {
+    await emailQueue.add("send-verification-email", {
         name: user.name,
         email: user.email,
         verificationToken,
@@ -63,7 +63,19 @@ export const logoutController = async (req: Request, res: Response) => {
 };
 
 export const verifyEmailController = async (req: Request, res: Response) => {
-  await verifyEmailService(req.body);
+  const {email, token} = req.query;
+
+  if (typeof email !== "string" || typeof token !== "string") {
+    return res.status(HttpCodes.BAD_REQUEST).json(
+      successResponse({
+        message: "Invalid email or token",
+        data: null,
+        code: AppCodes.INVALID_EMAIL_OR_TOKEN,
+      })
+    );
+  }
+  const data = { email, token };
+  await verifyEmailService(data);
 
   return res.status(HttpCodes.OK).json(
     successResponse({
@@ -89,7 +101,7 @@ export const resendVerificationEmailController = async (req: Request, res: Respo
 
   const { name, email, verificationToken } = result;
 
-  await emailQueue.add("sendVerificationEmail", {
+  await emailQueue.add("send-verification-email", {
     name,
     email,
     verificationToken,
@@ -120,7 +132,7 @@ export const forgotPasswordController = async (req: Request, res: Response) => {
 
     const { name, email, passwordToken } = result;
 
-    await emailQueue.add("sendPasswordResetEmail", {
+    await emailQueue.add("send-password-reset-email", {
       name,
       email,
       token: passwordToken,

@@ -1,6 +1,5 @@
 import type { TokenUser } from "../types/token";
 import { CustomError } from "../errors/CustomError";
-import { Types } from "mongoose";
 import { AppCodes } from "../errors/AppCodes";
 import { HttpCodes } from "../errors/HttpCodes";
 

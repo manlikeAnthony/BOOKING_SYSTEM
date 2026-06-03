@@ -9,8 +9,8 @@ import { errorHandlerMiddleware } from "./middlewares/error-handler";
 // Routes
 import authRouter from "./modules/auth/auth.route";
 import hotelRouter from "./modules/Hotel/hotel.route";
-// import roomRouter from "./modules/rooms/rooms.route";
-// import bookingRouter from "./modules/bookings/bookings.route";
+import RoomRouter from "./modules/rooms/room.route";
+import HotelMemberRouter from "./modules/HotelMember/hotelMember.route"
 
 const app = express();
 
@@ -34,8 +34,8 @@ app.get("/api/v1", (_req: Request, res: Response) => {
 // Routes
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/hotels", hotelRouter);
-// app.use("/api/v1/rooms", roomRouter);
-// app.use("/api/v1/bookings", bookingRouter);
+app.use("/api/v1/rooms", RoomRouter);
+app.use("/api/v1/hotel-members", HotelMemberRouter);
 
 // 404
 app.use(notFound);

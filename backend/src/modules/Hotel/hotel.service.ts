@@ -41,24 +41,27 @@ export const createHotelService = async (
     );
   }
 
-  const hotel = await prisma.hotel.create({
-    data: {
-      name,
-      slug,
-      email,
-      phone,
-      address,
-      members: {
-        create: {
-          userId,
-          role: "HOTEL_OWNER",
-        },
+  const hotel = await prisma.$transaction(async(tx)=>{
+    const createdHotel = await tx.hotel.create({
+      data: {
+        name,
+        slug,
+        email,
+        phone,
+        address,
       },
-    },
-    include: {
-      members: true,
-    },
-  });
+    });
+    
+    await tx.hotelMember.create({
+      data : {
+        hotelId : createdHotel.id,
+        userId,
+        role : "HOTEL_OWNER"
+      }
+    })
+
+    return createdHotel;
+  })
 
   return hotel;
 };
@@ -159,9 +162,40 @@ if (!membership) {
   );
 }
 
-  await prisma.hotel.delete({
-    where: { id: hotelId },
-  });
+  await prisma.$transaction(async(tx)=>{
+    await tx.hotel.update({
+      where:{id: hotelId},
+      data : {
+        isActive : false
+       }
+     })
+     await tx.room.updateMany({
+      where : {
+        hotelId
+      },
+      data : {
+        isActive : false
+       }
+    })
+
+    await tx.hotelMember.deleteMany({
+      where : {
+        hotelId
+      }
+    })
+
+    await tx.booking.updateMany({
+      where:{
+        hotelId,
+        status:{
+          in: ["PENDING" , "CHECKED_IN"]
+        }
+      },
+      data:{
+        status: "CANCELLED"
+      }
+    })
+  })
 
   return;
 };
@@ -193,8 +227,8 @@ export const updateHotelService = async (
     where : {
       hotelId,
       userId,
-      in:{
-        role : ["HOTEL_OWNER", "MANAGER"]
+      role:{
+        in : ["HOTEL_OWNER", "MANAGER"]
       }
     }
   })

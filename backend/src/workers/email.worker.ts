@@ -1,4 +1,4 @@
-import { tryCatch, Worker } from "bullmq";
+import { Worker } from "bullmq";
 import { redisConnection } from "../config/redis";
 
 import { verificationEmailHandler } from "../handlers/email/verificationEmail.handler";
@@ -6,8 +6,7 @@ import { resetPasswordHandler } from "../handlers/email/resetPassword.handler";
 
 import {emailDLQ} from "../queues/email.dlq";
 import { CustomLogger } from "../logger/CustomLogger";
-import { CustomError } from "../errors/CustomError";
-import { HttpCodes } from "../errors/HttpCodes";
+
 import { AppCodes } from "../errors/AppCodes";
 
 const handlerMap: Record<string, (data: any) => Promise<void>> = {
