@@ -63,6 +63,7 @@ model HotelMember {
 
   user  User  @relation(fields: [userId], references: [id])
   hotel Hotel @relation(fields: [hotelId], references: [id])
+  checkedInBookings Booking[]
 
   createdAt DateTime @default(now())
 
@@ -125,7 +126,7 @@ model Guest {
   hotelId   String
   fullName  String
   phone     String?
-  gender    String?
+  gender    Gender?
   idType    String?
   idNumber  String?
   notes     String?
@@ -139,15 +140,20 @@ model Booking {
   hotelId              String
   guestId              String
   roomId               String
-  checkedInBy          String?
+
+  checkedInById        String?
+  checkedInBy HotelMember? @relation(fields:[checkedInById], references: [id])
+
   status               BookingStatus @default(PENDING)
   bookingSource        BookingSource
   checkInDate          DateTime
   expectedCheckoutDate DateTime?
   actualCheckoutDate   DateTime?
   totalAmount          Int?
+
   createdAt            DateTime      @default(now())
   updatedAt            DateTime      @updatedAt
+
   guest                Guest         @relation(fields: [guestId], references: [id])
   hotel                Hotel         @relation(fields: [hotelId], references: [id])
   room                 Room          @relation(fields: [roomId], references: [id])
@@ -213,6 +219,12 @@ enum RoomStatus {
   CLEANING
   MAINTENANCE
   RESERVED
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  FOOL
 }
 
 enum BookingStatus {

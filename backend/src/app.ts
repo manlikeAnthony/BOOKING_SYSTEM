@@ -11,6 +11,8 @@ import authRouter from "./modules/auth/auth.route";
 import hotelRouter from "./modules/Hotel/hotel.route";
 import RoomRouter from "./modules/rooms/room.route";
 import HotelMemberRouter from "./modules/HotelMember/hotelMember.route"
+import GuestRouter from "./modules/Guest/guest.route";
+// import BookingRouter from "./modules/Booking/booking.route"; <ignore />
 
 const app = express();
 
@@ -36,8 +38,10 @@ app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/hotels", hotelRouter);
 app.use("/api/v1/rooms", RoomRouter);
 app.use("/api/v1/hotel-members", HotelMemberRouter);
+app.use("/api/v1/guests", GuestRouter);
+// app.use("/api/v1/bookings", BookingRouter);<ignore />
 
-// 404
+// not found route
 app.use(notFound);
 
 // Error Handler

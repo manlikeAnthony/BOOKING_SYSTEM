@@ -197,7 +197,6 @@ if (!membership) {
     })
   })
 
-  return;
 };
 
 export const updateHotelService = async (

@@ -17,6 +17,9 @@ import {
   removeHotelMemberSchema,
 } from "./hotelMember.validator";
 
+router.use()
+
+
 router.post("/:id/members", authenticateUser, validate(addHotelMemberSchema), asyncHandler(addHotelMemberController));
 router.get("/:id/members", authenticateUser, asyncHandler(getAllHotelMembersController));
 router.get("/:id/members/:userId", authenticateUser, asyncHandler(getSingleHotelMemberController));
