@@ -12,7 +12,7 @@ import hotelRouter from "./modules/Hotel/hotel.route";
 import RoomRouter from "./modules/rooms/room.route";
 import HotelMemberRouter from "./modules/HotelMember/hotelMember.route"
 import GuestRouter from "./modules/Guest/guest.route";
-// import BookingRouter from "./modules/Booking/booking.route"; <ignore />
+import BookingRouter from "./modules/bookings/booking.route";
 
 const app = express();
 
@@ -39,7 +39,7 @@ app.use("/api/v1/hotels", hotelRouter);
 app.use("/api/v1/rooms", RoomRouter);
 app.use("/api/v1/hotel-members", HotelMemberRouter);
 app.use("/api/v1/guests", GuestRouter);
-// app.use("/api/v1/bookings", BookingRouter);<ignore />
+app.use("/api/v1/bookings", BookingRouter);
 
 // not found route
 app.use(notFound);

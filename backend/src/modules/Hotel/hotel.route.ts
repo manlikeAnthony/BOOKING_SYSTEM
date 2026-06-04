@@ -15,8 +15,10 @@ import { validate } from "../../middlewares/validator.middleware";
 import { createHotelSchema, updateHotelSchema } from "./hotel.validator";
 
 import roomRouter from "../rooms/room.route";
+import bookingRouter from "../bookings/booking.route";
 
 router.use("/:hotelId/rooms", roomRouter);
+router.use("/:hotelId/bookings", bookingRouter);
 
 router.post(
   "/",

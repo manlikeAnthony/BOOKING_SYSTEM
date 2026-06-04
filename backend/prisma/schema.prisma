@@ -36,7 +36,7 @@ model User {
   email    String @unique
   password String
 
-  role    Role    @default(USER)
+  role     Role    @default(USER)
   isActive Boolean @default(true)
 
   isVerified Boolean @default(false)
@@ -48,7 +48,7 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  members HotelMember[]
+  members      HotelMember[]
   tokens       Token[]
   joinRequests HotelJoinRequest[]
 }
@@ -61,22 +61,25 @@ model HotelMember {
 
   role HotelRole
 
-  user  User  @relation(fields: [userId], references: [id])
-  hotel Hotel @relation(fields: [hotelId], references: [id])
-  checkedInBookings Booking[]
+  user              User      @relation(fields: [userId], references: [id])
+  hotel             Hotel     @relation(fields: [hotelId], references: [id])
 
-  createdAt DateTime @default(now())
+  createdAt         DateTime  @default(now())
+  bookings          Booking[]
+  createdBookings   Booking[] @relation("BookingCreatedBy")
+  checkedInBookings Booking[] @relation("BookingCheckedInBy")
 
   @@unique([userId, hotelId])
 }
+
 model HotelJoinRequest {
-  id        String @id @default(uuid())
-  hotelId   String
-  userId    String
+  id      String @id @default(uuid())
+  hotelId String
+  userId  String
 
   roleRequested HotelRole
 
-  status    RequestStatus @default(PENDING)
+  status RequestStatus @default(PENDING)
 
   createdAt DateTime @default(now())
 
@@ -110,7 +113,7 @@ model Room {
   price      Int
   type       RoomType
   capacity   Int
-  isActive Boolean @default(true)
+  isActive   Boolean            @default(true)
   status     RoomStatus         @default(AVAILABLE)
   createdAt  DateTime           @default(now())
   updatedAt  DateTime           @updatedAt
@@ -136,14 +139,15 @@ model Guest {
 }
 
 model Booking {
-  id                   String        @id @default(uuid())
-  hotelId              String
-  guestId              String
-  roomId               String
+  id          String       @id @default(uuid())
+  hotelId     String
+  guestId     String
+  roomId      String
+  createdById String?
+  createdBy   HotelMember? @relation("BookingCreatedBy", fields: [createdById], references: [id])
 
   checkedInById        String?
-  checkedInBy HotelMember? @relation(fields:[checkedInById], references: [id])
-
+  checkedInBy          HotelMember?  @relation("BookingCheckedInBy", fields: [checkedInById], references: [id])
   status               BookingStatus @default(PENDING)
   bookingSource        BookingSource
   checkInDate          DateTime
@@ -151,13 +155,15 @@ model Booking {
   actualCheckoutDate   DateTime?
   totalAmount          Int?
 
-  createdAt            DateTime      @default(now())
-  updatedAt            DateTime      @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  guest                Guest         @relation(fields: [guestId], references: [id])
-  hotel                Hotel         @relation(fields: [hotelId], references: [id])
-  room                 Room          @relation(fields: [roomId], references: [id])
-  payments             Payment[]
+  guest         Guest        @relation(fields: [guestId], references: [id])
+  hotel         Hotel        @relation(fields: [hotelId], references: [id])
+  room          Room         @relation(fields: [roomId], references: [id])
+  payments      Payment[]
+  hotelMember   HotelMember? @relation(fields: [hotelMemberId], references: [id])
+  hotelMemberId String?
 }
 
 model Payment {
@@ -201,11 +207,13 @@ enum HotelRole {
   ACCOUNTANT
   STAFF
 }
+
 enum RequestStatus {
   PENDING
   APPROVED
   REJECTED
 }
+
 enum RoomType {
   STANDARD
   DELUXE
@@ -229,6 +237,8 @@ enum Gender {
 
 enum BookingStatus {
   PENDING
+  CONFIRMED
+  RESERVED
   CHECKED_IN
   CHECKED_OUT
   CANCELLED
