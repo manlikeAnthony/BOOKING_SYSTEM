@@ -2,9 +2,14 @@ import { prisma } from "../../config/database";
 import { CustomError } from "../../errors/CustomError";
 import { AppCodes } from "../../errors/AppCodes";
 import { HttpCodes } from "../../errors/HttpCodes";
-import { CreateBookingDTO } from "../../dto/booking/createBooking.dto";
+import {
+  CreateBookingDTO,
+  CreatePublicBookingDTO,
+} from "../../dto/booking/createBooking.dto";
 import { getMembership } from "../../utils/getMembership";
 import { BookingQuery } from "./booking.query";
+import { Prisma } from "@prisma/client";
+import crypto from "crypto";
 
 export const createBookingService = async (
   hotelId: string,
@@ -90,7 +95,7 @@ export const createBookingService = async (
       roomId: data.roomId,
       hotelId,
       status: {
-        in: ["PENDING", "CONFIRMED", "RESERVED", "CHECKED_IN"],
+        in: ["PENDING_PAYMENT", "CONFIRMED", "CHECKED_IN"],
       },
       AND: [
         {
@@ -122,21 +127,197 @@ export const createBookingService = async (
     );
   }
 
+  const nights = Math.ceil(
+    (checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24),
+  );
+
+  const roomAmount = nights * room.price;
+  const bookingReference = `BK-${crypto.randomBytes(4).toString("hex").toUpperCase()}`;
+
   const booking = await prisma.booking.create({
     data: {
       hotelId,
       guestId: data.guestId,
       roomId: data.roomId,
+
       bookingSource: data.bookingSource,
       createdById: membership.id,
+
       checkInDate: checkIn,
       expectedCheckoutDate: data.expectedCheckoutDate ? checkOut : null,
-      totalAmount: data.totalAmount ?? 0,
-      status: "PENDING",
+
+      nights,
+      roomAmount,
+
+      bookingReference,
+
+      depositRequired: 0,
+      depositPaid: 0,
+      totalPaid: 0,
+
+      status: "PENDING_PAYMENT",
     },
   });
 
   return booking;
+};
+
+export const createPublicBookingService = async (
+  data: CreatePublicBookingDTO,
+) => {
+  const hotel = await prisma.hotel.findUnique({
+    where: { id: data.hotelId },
+  });
+
+  if (!hotel) {
+    CustomError.throwError(
+      HttpCodes.NOT_FOUND,
+      AppCodes.HOTEL_NOT_FOUND,
+      "Hotel not found",
+    );
+  }
+
+  if (!data.expectedCheckoutDate) {
+    CustomError.throwError(
+      HttpCodes.BAD_REQUEST,
+      AppCodes.INVALID_INPUT,
+      "Checkout date is required",
+    );
+  }
+
+  if(!data.email){
+    CustomError.throwError(
+      HttpCodes.BAD_REQUEST,
+      AppCodes.MISSING_REQUIRED_FIELDS,
+      "Email must be provided for online bookings"
+    )
+  }
+  const checkIn = new Date(data.checkInDate);
+  const checkOut = new Date(data.expectedCheckoutDate);
+
+  if (checkIn >= checkOut) {
+    CustomError.throwError(
+      HttpCodes.BAD_REQUEST,
+      AppCodes.INVALID_INPUT,
+      "Check-in date must be before checkout date",
+    );
+  }
+
+  const room = await prisma.room.findFirst({
+    where: {
+      id: data.roomId,
+      hotelId: data.hotelId,
+    },
+  });
+
+  if (!room) {
+    CustomError.throwError(
+      HttpCodes.NOT_FOUND,
+      AppCodes.ROOM_NOT_FOUND,
+      "Room not found",
+    );
+  }
+
+  if (room.status === "MAINTENANCE") {
+    CustomError.throwError(
+      HttpCodes.CONFLICT,
+      AppCodes.ROOM_UNAVAILABLE,
+      "Room is not available for booking",
+    );
+  }
+
+  const conflictingBooking = await prisma.booking.findFirst({
+    where: {
+      roomId: data.roomId,
+      hotelId: data.hotelId,
+      status: {
+        in: ["PENDING_PAYMENT", "CONFIRMED", "CHECKED_IN"],
+      },
+      AND: [
+        {
+          checkInDate: {
+            lt: checkOut,
+          },
+        },
+        {
+          OR: [
+            {
+              expectedCheckoutDate: {
+                gt: checkIn,
+              },
+            },
+            {
+              expectedCheckoutDate: null,
+            },
+          ],
+        },
+      ],
+    },
+  });
+
+  if (conflictingBooking) {
+    CustomError.throwError(
+      HttpCodes.CONFLICT,
+      AppCodes.BOOKING_CONFLICT,
+      "Booking conflict found",
+    );
+  }
+
+  const nights = Math.ceil(
+    (checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24),
+  );
+
+  const roomAmount = nights * room.price;
+
+  const depositRequired = Math.ceil(roomAmount * 0.3); // Assuming 30% deposit
+  const guest = await prisma.guest.create({
+    data: {
+      hotelId: data.hotelId,
+      fullName: data.fullName,
+      phone: data.phone,
+      email:data.email
+    },
+  });
+
+const bookingReference = `BK-${crypto.randomBytes(4).toString("hex").toUpperCase()}`;
+
+  const booking = await prisma.booking.create({
+    data: {
+      hotelId: data.hotelId,
+      guestId: guest.id,
+      roomId: room.id,
+
+
+      bookingSource: "ONLINE",
+
+      status: "PENDING_PAYMENT",
+
+      checkInDate: checkIn,
+      expectedCheckoutDate: checkOut,
+
+      nights,
+      roomAmount,
+      bookingReference,
+
+      depositRequired,
+      depositPaid: 0,
+      totalPaid: 0,
+    },
+    include: {
+      room: true,
+      guest: true,
+    },
+  });
+
+  return {
+    booking,
+    paymentSummary: {
+      roomAmount,
+      depositRequired,
+      remainingBalance: roomAmount - depositRequired,
+      note: "Additional hotel charges may apply during stay.",
+    },
+  };
 };
 
 export const getAllBookingsService = async (
@@ -267,8 +448,6 @@ export const getSingleBookingService = async (
   return booking;
 };
 
-import { Prisma } from "@prisma/client";
-
 export const updateBookingService = async (
   hotelId: string,
   userId: string,
@@ -289,11 +468,7 @@ export const updateBookingService = async (
 
   const membership = await getMembership(hotelId, userId);
 
-  const allowedRoles = [
-    "HOTEL_OWNER",
-    "MANAGER",
-    "RECEPTIONIST",
-  ];
+  const allowedRoles = ["HOTEL_OWNER", "MANAGER", "RECEPTIONIST"];
 
   if (!membership || !allowedRoles.includes(membership.role)) {
     CustomError.throwError(
@@ -404,57 +579,69 @@ export const updateBookingService = async (
       },
     };
   }
+  const room =
+    data.roomId || data.checkInDate || data.expectedCheckoutDate
+      ? await prisma.room.findFirst({
+          where: {
+            id: data.roomId ?? booking.roomId,
+            hotelId,
+          },
+        })
+      : null;
+
+  if (room && newCheckOut) {
+    const nights = Math.ceil(
+      (newCheckOut.getTime() - newCheckIn.getTime()) / (1000 * 60 * 60 * 24),
+    );
+
+    const roomAmount = nights * room.price;
+
+    const depositRequired = Math.ceil(roomAmount * 0.3);
+
+    updateData.nights = nights;
+    updateData.roomAmount = roomAmount;
+    updateData.depositRequired = depositRequired;
+  }
 
   // Only run conflict detection if room/dates are changing
-  if (
-    data.roomId ||
-    data.checkInDate ||
-    data.expectedCheckoutDate
-  ) {
+  if (data.roomId || data.checkInDate || data.expectedCheckoutDate) {
     const roomIdToCheck = data.roomId ?? booking.roomId;
 
-    const conflictCheckOut =
-      newCheckOut ?? new Date("9999-12-31");
+    const conflictCheckOut = newCheckOut ?? new Date("9999-12-31");
 
-    const conflictingBooking =
-      await prisma.booking.findFirst({
-        where: {
-          id: {
-            not: bookingId,
+    const conflictingBooking = await prisma.booking.findFirst({
+      where: {
+        id: {
+          not: bookingId,
+        },
+        hotelId,
+        roomId: roomIdToCheck,
+
+        status: {
+          in: ["PENDING_PAYMENT", "CONFIRMED", "CHECKED_IN"],
+        },
+
+        AND: [
+          {
+            checkInDate: {
+              lt: conflictCheckOut,
+            },
           },
-          hotelId,
-          roomId: roomIdToCheck,
-
-          status: {
-            in: [
-              "PENDING",
-              "CONFIRMED",
-              "RESERVED",
-              "CHECKED_IN",
+          {
+            OR: [
+              {
+                expectedCheckoutDate: {
+                  gt: newCheckIn,
+                },
+              },
+              {
+                expectedCheckoutDate: null,
+              },
             ],
           },
-
-          AND: [
-            {
-              checkInDate: {
-                lt: conflictCheckOut,
-              },
-            },
-            {
-              OR: [
-                {
-                  expectedCheckoutDate: {
-                    gt: newCheckIn,
-                  },
-                },
-                {
-                  expectedCheckoutDate: null,
-                },
-              ],
-            },
-          ],
-        },
-      });
+        ],
+      },
+    });
 
     if (conflictingBooking) {
       CustomError.throwError(
@@ -475,10 +662,6 @@ export const updateBookingService = async (
 
   if (data.bookingSource) {
     updateData.bookingSource = data.bookingSource;
-  }
-
-  if (data.totalAmount !== undefined) {
-    updateData.totalAmount = data.totalAmount;
   }
 
   const updatedBooking = await prisma.booking.update({
@@ -556,7 +739,7 @@ export const cancelBookingService = async (
     );
   }
 
-  if(booking.status === "CANCELLED") {
+  if (booking.status === "CANCELLED") {
     CustomError.throwError(
       HttpCodes.BAD_REQUEST,
       AppCodes.INVALID_INPUT,
@@ -659,12 +842,10 @@ export const getBookingsByRoomId = async (
     );
   }
 
-
   const whereClause: any = {
     hotelId,
     roomId,
   };
-
 
   const bookings = await prisma.booking.findMany({
     where: whereClause,
@@ -733,11 +914,11 @@ export const confirmBookingService = async (
     );
   }
 
-  if (booking.status !== "PENDING") {
+  if (booking.status !== "PENDING_PAYMENT") {
     CustomError.throwError(
       HttpCodes.BAD_REQUEST,
       AppCodes.INVALID_INPUT,
-      "Only pending bookings can be confirmed",
+      "Only pending payment bookings can be confirmed",
     );
   }
 

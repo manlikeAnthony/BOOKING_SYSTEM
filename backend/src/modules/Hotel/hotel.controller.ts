@@ -5,12 +5,13 @@ import {
   getHotelByIdService,
   deleteHotelService,
   updateHotelService,
+  adminActivateHotelService,
+  adminDeactivateHotelService
 } from "./hotel.service";
 
 import { parseHotelQuery } from "./hotel.query";
 import { AppCodes } from "../../errors/AppCodes";
 import { HttpCodes } from "../../errors/HttpCodes";
-import { CustomError } from "../../errors/CustomError";
 import { CreateHotelDTO } from "../../dto/hotel/createHotel.dto";
 import type { Params } from "../../types/auth.types";
 
@@ -94,5 +95,31 @@ export const updateHotelController = async (req: Request<Params>, res: Response)
     code: AppCodes.HOTEL_UPDATED,
     message: "Hotel updated successfully",
     data: hotel,
+  });
+};
+
+export const adminActivateHotelController = async (req: Request<Params>, res: Response) => {
+  const hotelId = req.params.id;
+  const userId = req.user.userId;
+
+  await adminActivateHotelService(hotelId , userId);
+
+  res.status(HttpCodes.OK).json({
+    code: AppCodes.HOTEL_ACTIVATED,
+    message: "Hotel activated successfully",
+    data: null,
+  });
+};
+
+export const adminDeactivateHotelController = async (req: Request<Params>, res: Response) => {
+  const hotelId = req.params.id;
+  const userId = req.user.userId;
+
+  await adminDeactivateHotelService(hotelId , userId);
+
+  res.status(HttpCodes.OK).json({
+    code: AppCodes.HOTEL_DEACTIVATED,
+    message: "Hotel deactivated successfully",
+    data: null,
   });
 };

@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 
 import {
     createBookingService,
+    createPublicBookingService,
     getAllBookingsService,
     getSingleBookingService,
     updateBookingService,
@@ -17,7 +18,7 @@ import { AppCodes } from "../../errors/AppCodes";
 import { HttpCodes } from "../../errors/HttpCodes";
 import { successResponse } from "../../response";
 import { parseBookingQuery } from "./booking.query";
-import { CreateBookingDTO } from "../../dto/booking/createBooking.dto";
+import { CreateBookingDTO, CreatePublicBookingDTO } from "../../dto/booking/createBooking.dto";
 import { HotelParams } from "../../types/params.types";
 import { UpdateBookingDTO } from "../../dto/booking/updateBooking.dto";
 
@@ -34,6 +35,18 @@ export const createBooking = async (req: Request<HotelParams>, res: Response) =>
         data: newBooking,
         code: AppCodes.RESOURCE_CREATED,
     }));
+}
+
+export const createPublicBooking = async (req: Request, res: Response) => {
+  const bookingData = req.body as CreatePublicBookingDTO;
+  
+  const newBooking = await createPublicBookingService(bookingData);
+
+  res.status(HttpCodes.CREATED).json(successResponse({
+    message: "Booking created successfully",
+    data: newBooking,
+    code: AppCodes.RESOURCE_CREATED,
+  }));
 }
 
 export const getAllBookings = async (req: Request<HotelParams>, res: Response) => {

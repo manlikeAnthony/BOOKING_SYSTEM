@@ -61,14 +61,16 @@ model HotelMember {
 
   role HotelRole
 
-  user              User      @relation(fields: [userId], references: [id])
-  hotel             Hotel     @relation(fields: [hotelId], references: [id])
+  user  User  @relation(fields: [userId], references: [id])
+  hotel Hotel @relation(fields: [hotelId], references: [id])
 
   createdAt         DateTime  @default(now())
   bookings          Booking[]
   createdBookings   Booking[] @relation("BookingCreatedBy")
   checkedInBookings Booking[] @relation("BookingCheckedInBy")
-
+  
+  receivedPayments  Payment[] @relation("PaymentReceivedBy")
+  initiatedPayments Payment[] @relation("PaymentInitiatedBy")
   @@unique([userId, hotelId])
 }
 
@@ -129,6 +131,7 @@ model Guest {
   hotelId   String
   fullName  String
   phone     String?
+  email     String?
   gender    Gender?
   idType    String?
   idNumber  String?
@@ -139,46 +142,74 @@ model Guest {
 }
 
 model Booking {
-  id          String       @id @default(uuid())
-  hotelId     String
-  guestId     String
-  roomId      String
+  id      String @id @default(uuid())
+  hotelId String
+  guestId String
+  roomId  String
+
   createdById String?
   createdBy   HotelMember? @relation("BookingCreatedBy", fields: [createdById], references: [id])
 
-  checkedInById        String?
-  checkedInBy          HotelMember?  @relation("BookingCheckedInBy", fields: [checkedInById], references: [id])
-  status               BookingStatus @default(PENDING)
-  bookingSource        BookingSource
+  checkedInById String?
+  checkedInBy   HotelMember? @relation("BookingCheckedInBy", fields: [checkedInById], references: [id])
+
+  status        BookingStatus @default(PENDING_PAYMENT)
+  bookingSource BookingSource
+
   checkInDate          DateTime
   expectedCheckoutDate DateTime?
   actualCheckoutDate   DateTime?
-  totalAmount          Int?
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  nights Int
 
-  guest         Guest        @relation(fields: [guestId], references: [id])
-  hotel         Hotel        @relation(fields: [hotelId], references: [id])
-  room          Room         @relation(fields: [roomId], references: [id])
-  payments      Payment[]
+  roomAmount Int
+
+  depositRequired Int
+  depositPaid     Int @default(0)
+
+  totalPaid        Int      @default(0)
+  bookingReference String   @unique
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  guest Guest @relation(fields: [guestId], references: [id])
+  hotel Hotel @relation(fields: [hotelId], references: [id])
+  room  Room  @relation(fields: [roomId], references: [id])
+
+  payments Payment[]
+
   hotelMember   HotelMember? @relation(fields: [hotelMemberId], references: [id])
   hotelMemberId String?
 }
 
 model Payment {
-  id         String        @id @default(uuid())
-  hotelId    String
-  bookingId  String
-  amount     Int
-  method     PaymentMethod
-  status     PaymentStatus
-  reference  String?
-  receivedBy String?
+  id        String        @id @default(uuid())
+  hotelId   String
+  bookingId String
+  amount    Int
+  method    PaymentMethod
+  status    PaymentStatus
+  reference String? @unique
+
+  provider          String?
+  providerReference String? @unique
+  currency String @default("NGN")
+  notes    String?
+
+  receivedById String?
+  receivedBy   HotelMember? @relation("PaymentReceivedBy", fields: [receivedById], references: [id])
+
+  initiatedById String?
+  initiatedBy  HotelMember? @relation("PaymentInitiatedBy", fields: [initiatedById], references: [id])
+
+  idempotencyKey String? @unique
+
   paidAt     DateTime?
-  createdAt  DateTime      @default(now())
-  booking    Booking       @relation(fields: [bookingId], references: [id])
-  hotel      Hotel         @relation(fields: [hotelId], references: [id])
+  createdAt  DateTime  @default(now())
+  booking    Booking   @relation(fields: [bookingId], references: [id])
+  hotel      Hotel     @relation(fields: [hotelId], references: [id])
+
+  @@unique([bookingId, reference])
 }
 
 model HousekeepingTask {
@@ -236,9 +267,8 @@ enum Gender {
 }
 
 enum BookingStatus {
-  PENDING
+  PENDING_PAYMENT
   CONFIRMED
-  RESERVED
   CHECKED_IN
   CHECKED_OUT
   CANCELLED

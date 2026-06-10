@@ -9,5 +9,16 @@ export interface CreateBookingDTO {
   checkInDate: Date;
   expectedCheckoutDate?: Date;
 
-  totalAmount?: number;
+}
+
+export interface CreatePublicBookingDTO {
+  hotelId: string;
+  roomId: string;
+
+  fullName: string;
+  phone: string;
+  email: string;
+
+  checkInDate: string;
+  expectedCheckoutDate: string;
 }

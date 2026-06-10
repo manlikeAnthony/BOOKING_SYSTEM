@@ -11,11 +11,33 @@ export const createBookingSchema = Joi.object({
     .required(),
 });
 
+export const createPublicBookingSchema = Joi.object({
+  roomId: Joi.string().required(),
+  hotelId: Joi.string().required(),
+  email: Joi.string().email().trim().max(100).required().messages({
+    "string.email": "Invalid email format",
+    "string.max": "Email cannot exceed 100 characters",
+    "any.required": "Email is required",
+  }),
+  guestId: Joi.string().required(),
+  startDate: Joi.date().iso().required(),
+  endDate: Joi.date().iso().required(),
+  bookingSource: Joi.string()
+    .valid("WALK_IN", "PHONE", "ONLINE", "AGENT", "WHATSAPP")
+    .required(),
+});
+
 export const updateBookingSchema = Joi.object({
   roomId: Joi.string().optional(),
   hotelId: Joi.string().optional(),
   guestId: Joi.string().optional(),
   checkInDate: Joi.date().iso().optional(),
   expectedCheckoutDate: Joi.date().iso().optional(),
-  bookingSource: Joi.string().valid("WALK_IN", "PHONE", "ONLINE", "AGENT", "WHATSAPP"),
+  bookingSource: Joi.string().valid(
+    "WALK_IN",
+    "PHONE",
+    "ONLINE",
+    "AGENT",
+    "WHATSAPP",
+  ),
 });

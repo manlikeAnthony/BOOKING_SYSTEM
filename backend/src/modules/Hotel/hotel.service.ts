@@ -60,6 +60,7 @@ export const createHotelService = async (
       }
     })
 
+
     return createdHotel;
   })
 
@@ -119,7 +120,17 @@ export const getHotelByIdService = async (hotelId: string) => {
   const hotel = await prisma.hotel.findUnique({
     where: { id: hotelId },
     include: {
-      members: true,
+      members: {
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+        },
+      },
     },
   });
 
@@ -188,7 +199,7 @@ if (!membership) {
       where:{
         hotelId,
         status:{
-          in: ["PENDING" , "CHECKED_IN"]
+          in: ["PENDING_PAYMENT" , "CHECKED_IN"]
         }
       },
       data:{
@@ -275,4 +286,103 @@ if (!membership) {
   });
 
   return updatedHotel;
+};
+
+export const adminDeactivateHotelService = async (hotelId: string , userId: string) => {
+  const hotel = await prisma.hotel.findUnique({
+    where: { id: hotelId },
+  });
+
+  if (!hotel) {
+    CustomError.throwError(
+      HttpCodes.NOT_FOUND,
+      AppCodes.HOTEL_NOT_FOUND,
+      "Hotel not found",
+    );
+  }
+
+  const user = await prisma.user.findUnique({
+    where : {
+      id : userId
+    }
+  })
+
+if (!user || user?.role !== "SUPER_ADMIN") {
+  CustomError.throwError(
+    HttpCodes.FORBIDDEN,
+    AppCodes.UNAUTHORIZED,
+    "You are not allowed to deactivate this hotel",
+  );
+}
+
+  await prisma.$transaction(async(tx)=>{
+    await tx.hotel.update({
+      where:{id: hotelId},
+      data : {
+        isActive : false
+       }
+     })
+     await tx.room.updateMany({
+      where : {
+        hotelId
+      },
+      data : {
+        isActive : false
+       }
+    })
+  })
+
+};
+
+export const adminActivateHotelService = async (hotelId: string , userId: string) => {
+  const hotel = await prisma.hotel.findUnique({
+    where: { id: hotelId },
+  });
+
+  if (!hotel) {
+    CustomError.throwError(
+      HttpCodes.NOT_FOUND,
+      AppCodes.HOTEL_NOT_FOUND,
+      "Hotel not found",
+    );
+  }
+
+  const user = await prisma.user.findUnique({
+    where : {
+      id : userId
+    }
+  })
+
+if (!user || user?.role !== "SUPER_ADMIN") {
+  CustomError.throwError(
+    HttpCodes.FORBIDDEN,
+    AppCodes.UNAUTHORIZED,
+    "You are not allowed to activate this hotel",
+  );
+}
+
+if(hotel.isActive){
+  CustomError.throwError(
+    HttpCodes.BAD_REQUEST,
+    AppCodes.HOTEL_ACTIVATED,
+    "Hotel is already active",
+  );
+}
+  await prisma.$transaction(async(tx)=>{
+    await tx.hotel.update({
+      where:{id: hotelId},
+      data : {
+        isActive : true
+       }
+     })
+     await tx.room.updateMany({
+      where : {
+        hotelId
+      },
+      data : {
+        isActive : true
+       }
+    })
+  })
+
 };

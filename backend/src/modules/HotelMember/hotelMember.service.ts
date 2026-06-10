@@ -85,8 +85,9 @@ export const addHotelMemberService = async (
   }
 
   const membership = await getMembership(hotelId, userId);
+  const allowedRoles: HotelRole[] = ["HOTEL_OWNER", "MANAGER"];
 
-  if (!membership || membership.role !== "HOTEL_OWNER") {
+  if (!membership || !allowedRoles.includes(membership.role)) {
     CustomError.throwError(
       HttpCodes.FORBIDDEN,
       AppCodes.UNAUTHORIZED,
@@ -127,7 +128,7 @@ export const addHotelMemberService = async (
       "Cannot assign HOTEL_OWNER role to another user",
     );
   }
-  await prisma.hotelMember.create({
+  const newMember = await prisma.hotelMember.create({
     data: {
       hotelId,
       userId: targetUserId,
@@ -135,7 +136,7 @@ export const addHotelMemberService = async (
     },
   });
 
-  return;
+  return newMember;
 };
 
 export const removeHotelMemberService = async (
@@ -156,8 +157,9 @@ export const removeHotelMemberService = async (
   }
 
   const membership = await getMembership(hotelId, userId);
+  const allowedRoles: HotelRole[] = ["HOTEL_OWNER", "MANAGER"];
 
-  if (!membership || membership.role !== "HOTEL_OWNER") {
+  if (!membership || !allowedRoles.includes(membership.role)) {
     CustomError.throwError(
       HttpCodes.FORBIDDEN,
       AppCodes.UNAUTHORIZED,
@@ -196,7 +198,7 @@ export const removeHotelMemberService = async (
     },
   });
 
-  return;
+  return targetMembership;
 };
 
 export const updateHotelMemberRoleService = async (
@@ -218,8 +220,9 @@ export const updateHotelMemberRoleService = async (
   }
 
   const membership = await getMembership(hotelId, userId);
+  const allowedRoles: HotelRole[] = ["HOTEL_OWNER", "MANAGER"];
 
-  if (!membership || !  !["HOTEL_OWNER", "MANAGER"].includes(membership.role)) {
+  if (!membership || !allowedRoles.includes(membership.role)) {
     CustomError.throwError(
       HttpCodes.FORBIDDEN,
       AppCodes.UNAUTHORIZED,
@@ -250,7 +253,7 @@ export const updateHotelMemberRoleService = async (
     );
   }
 
-  await prisma.hotelMember.update({
+  const updatedMember = await prisma.hotelMember.update({
     where: {
       id: targetMembership.id,
     },
@@ -259,7 +262,7 @@ export const updateHotelMemberRoleService = async (
     },
   });
 
-  return;
+  return updatedMember;
 };
 
 export const getSingleHotelMemberService = async (

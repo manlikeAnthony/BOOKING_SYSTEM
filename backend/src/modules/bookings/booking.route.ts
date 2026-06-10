@@ -1,6 +1,7 @@
 import express from "express";
 import {
   createBooking,
+  createPublicBooking,
   getAllBookings,
   getSingleBooking,
   updateBooking,
@@ -15,7 +16,7 @@ import {
 import { asyncHandler } from "../../middlewares/async-handler";
 import { authenticateUser } from "../../middlewares/authenticate";
 import { validate } from "../../middlewares/validator.middleware";
-import { createBookingSchema, updateBookingSchema } from "./booking.validator";
+import { createBookingSchema, createPublicBookingSchema , updateBookingSchema } from "./booking.validator";
 
 const router = express.Router({ mergeParams: true });
 
@@ -25,6 +26,13 @@ router.post(
   validate(createBookingSchema),
   asyncHandler(createBooking),
 );
+
+router.post(
+  "/public",
+  validate(createPublicBookingSchema),
+  asyncHandler(createPublicBooking),
+);
+
 router.get("/", authenticateUser, asyncHandler(getAllBookings));
 router.get(
   "/guest/:guestId",

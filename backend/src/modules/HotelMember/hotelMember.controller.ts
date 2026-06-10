@@ -9,11 +9,11 @@ import {
 } from "./hotelMember.service";
 import { AppCodes } from "../../errors/AppCodes";
 import { HttpCodes } from "../../errors/HttpCodes";
-import type { Params } from "../../types/auth.types";
 import { parseHotelMemberQuery } from "./hotelMember.query";
+import { HotelParams } from "../../types/params.types";
 
-export const addHotelMemberController = async (req: Request<Params>, res: Response) => {
-  const hotelId = req.params.id;
+export const addHotelMemberController = async (req: Request<HotelParams>, res: Response) => {
+  const hotelId = req.params.hotelId;
   const userId = req.user.userId;
   const { targetUserId, role } = req.body;
 
@@ -26,8 +26,8 @@ export const addHotelMemberController = async (req: Request<Params>, res: Respon
   });
 };
 
-export const getAllHotelMembersController = async (req: Request<Params>, res: Response) => {
-  const hotelId = req.params.id;
+export const getAllHotelMembersController = async (req: Request<HotelParams>, res: Response) => {
+  const hotelId = req.params.hotelId;
   const userId = req.user.userId;
   const query = parseHotelMemberQuery(req);
 
@@ -40,8 +40,8 @@ export const getAllHotelMembersController = async (req: Request<Params>, res: Re
   });
 };
 
-export const getSingleHotelMemberController = async (req: Request<Params>, res: Response) => {
-  const hotelId = req.params.id;
+export const getSingleHotelMemberController = async (req: Request<HotelParams>, res: Response) => {
+  const hotelId = req.params.hotelId;
   const userId = req.user.userId;
   const targetUserId = req.params.userId;
 
@@ -55,8 +55,8 @@ export const getSingleHotelMemberController = async (req: Request<Params>, res: 
 };
 
 
-export const removeHotelMemberController = async (req: Request<Params>, res: Response) => {
-  const hotelId = req.params.id;
+export const removeHotelMemberController = async (req: Request<HotelParams>, res: Response) => {
+  const hotelId = req.params.hotelId;
   const userId = req.user.userId;
   const targetUserId  = req.params.userId;
 
@@ -68,8 +68,8 @@ export const removeHotelMemberController = async (req: Request<Params>, res: Res
   });
 };
 
-export const updateHotelMemberRoleController = async (req: Request<Params>, res: Response) => {
-  const hotelId = req.params.id;
+export const updateHotelMemberRoleController = async (req: Request<HotelParams>, res: Response) => {
+  const hotelId = req.params.hotelId;
   const userId = req.user.userId;
   const targetUserId = req.params.userId;
   const { role } = req.body;

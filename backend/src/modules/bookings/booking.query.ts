@@ -27,9 +27,8 @@ const allowedSortFields = [
 ] as const;
 
 const allowedStatuses: BookingStatus[] = [
-  "PENDING",
+  "PENDING_PAYMENT",
   "CONFIRMED",
-  "RESERVED",
   "CHECKED_IN",
   "CHECKED_OUT",
   "CANCELLED",

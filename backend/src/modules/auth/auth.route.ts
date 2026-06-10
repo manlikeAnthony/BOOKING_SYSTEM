@@ -12,24 +12,25 @@ import {
 import { authenticateUser } from "../../middlewares/authenticate";
 import { validate } from "../../middlewares/validator.middleware";
 import {registerSchema , loginSchema , verifyEmailSchema , resendVerificationEmailSchema , forgotPasswordSchema , resetPasswordSchema} from "./auth.validation";
+import {asyncHandler} from "../../middlewares/async-handler";
 const router = Router();
 
-router.post("/register", validate(registerSchema), registerController);
+router.post("/register", validate(registerSchema), asyncHandler(registerController));
 
-router.post("/login", validate(loginSchema), loginController);
+router.post("/login", validate(loginSchema), asyncHandler(loginController));
 
-router.post("/logout", authenticateUser, logoutController);
+router.post("/logout", authenticateUser, asyncHandler(logoutController));
 
-router.post("/verify-email", validate(verifyEmailSchema), verifyEmailController);
+router.post("/verify-email", validate(verifyEmailSchema), asyncHandler(verifyEmailController));
 
 router.post(
   "/resend-verification-email",
   validate(resendVerificationEmailSchema),
-  resendVerificationEmailController,
+  asyncHandler(resendVerificationEmailController),
 );
 
-router.post("/forgot-password", validate(forgotPasswordSchema), forgotPasswordController);
+router.post("/forgot-password", validate(forgotPasswordSchema), asyncHandler(forgotPasswordController));
 
-router.post("/reset-password", validate(resetPasswordSchema), resetPasswordController);
+router.post("/reset-password", validate(resetPasswordSchema), asyncHandler(resetPasswordController));
 
 export default router;

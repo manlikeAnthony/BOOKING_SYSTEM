@@ -13,6 +13,8 @@ import RoomRouter from "./modules/rooms/room.route";
 import HotelMemberRouter from "./modules/HotelMember/hotelMember.route"
 import GuestRouter from "./modules/Guest/guest.route";
 import BookingRouter from "./modules/bookings/booking.route";
+import PaymentRouter from "./modules/payments/payment.route";
+import paymentWebhookRouter from "./modules/payments/payment.webhook.route";
 
 const app = express();
 
@@ -24,8 +26,18 @@ app.use(
   })
 );
 
+app.use(
+  "/api/v1/payments/webhook",
+  express.raw({
+    type: "application/json",
+  }),
+  paymentWebhookRouter,
+);
+
+
 app.use(express.json());
 app.use(cookieParser());
+
 app.use(morgan("dev"));
 
 // Health Check
@@ -40,7 +52,7 @@ app.use("/api/v1/rooms", RoomRouter);
 app.use("/api/v1/hotel-members", HotelMemberRouter);
 app.use("/api/v1/guests", GuestRouter);
 app.use("/api/v1/bookings", BookingRouter);
-
+app.use("/api/v1/payments", PaymentRouter);
 // not found route
 app.use(notFound);
 

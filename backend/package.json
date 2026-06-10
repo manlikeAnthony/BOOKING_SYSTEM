@@ -1,5 +1,5 @@
 {
-  "name": "Booking-system",
+  "name": "booking-system",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
@@ -35,6 +35,7 @@
     "@prisma/client": "^6.19.3",
     "@types/node-geocoder": "^4.2.6",
     "@types/nodemailer": "^7.0.11",
+    "axios": "^1.17.0",
     "bcryptjs": "^3.0.3",
     "bullmq": "^5.76.6",
     "cookie-parser": "^1.4.7",
