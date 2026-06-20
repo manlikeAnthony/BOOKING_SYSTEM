@@ -1,10 +1,17 @@
 import express, { Request, Response } from "express";
+// packages
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import morgan from "morgan";
+import helmet from "helmet";
+import xss from "xss-clean";
+import rateLimiter from "express-rate-limit";
+import mongoSanitize from "express-mongo-sanitize";
+
 
 import { notFound } from "./middlewares/not-found";
 import { errorHandlerMiddleware } from "./middlewares/error-handler";
+
 
 // Routes
 import AuthRouter from "./modules/auth/auth.route";
@@ -18,6 +25,7 @@ import PaymentWebhookRouter from "./modules/payments/payment.webhook.route";
 import AnalyticsRouter from "./modules/analytics/analytics.route";
 
 const app = express();
+app.disable("x-powered-by");
 
 // Middlewares
 app.use(
@@ -35,6 +43,17 @@ app.use(
   PaymentWebhookRouter,
 );
 
+app.set("trust proxy", 1);
+app.use(
+  rateLimiter({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // limit each IP to 100 requests per windowMs
+  }),
+);
+
+app.use(helmet());
+app.use(xss());
+app.use(mongoSanitize());
 
 app.use(express.json());
 app.use(cookieParser());
