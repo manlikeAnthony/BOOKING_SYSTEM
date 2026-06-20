@@ -19,10 +19,14 @@ import { createHotelSchema, updateHotelSchema } from "./hotel.validator";
 import roomRouter from "../rooms/room.route";
 import bookingRouter from "../bookings/booking.route";
 import guestRouter from "../Guest/guest.route";
+import hotelMemberRouter from "../HotelMember/hotelMember.route";
+import analyticsRouter from "../analytics/analytics.route";
 
 router.use("/:hotelId/rooms", roomRouter);
 router.use("/:hotelId/bookings", bookingRouter);
 router.use("/:hotelId/guests", guestRouter);
+router.use("/:hotelId/members", hotelMemberRouter);
+router.use("/:hotelId/analytics", analyticsRouter);
 
 router.post(
   "/",

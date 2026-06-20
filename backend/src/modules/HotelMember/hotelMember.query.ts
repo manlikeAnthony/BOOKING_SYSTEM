@@ -41,12 +41,10 @@ export const parseHotelMemberQuery = (req: Request): HotelMemberQuery => {
                 sortField = field;
                 sortOrder = "desc";
             }
-        } else {
-            if (allowedSortFields.includes(sort)) {
+        } else if (allowedSortFields.includes(sort)) {
                 sortField = sort;
                 sortOrder = "asc";
             }
-        }
     }
 
     const parsedPage = Math.max(1, Number(page));

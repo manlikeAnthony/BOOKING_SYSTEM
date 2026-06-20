@@ -7,14 +7,15 @@ import { notFound } from "./middlewares/not-found";
 import { errorHandlerMiddleware } from "./middlewares/error-handler";
 
 // Routes
-import authRouter from "./modules/auth/auth.route";
-import hotelRouter from "./modules/Hotel/hotel.route";
+import AuthRouter from "./modules/auth/auth.route";
+import HotelRouter from "./modules/Hotel/hotel.route";
 import RoomRouter from "./modules/rooms/room.route";
 import HotelMemberRouter from "./modules/HotelMember/hotelMember.route"
 import GuestRouter from "./modules/Guest/guest.route";
 import BookingRouter from "./modules/bookings/booking.route";
 import PaymentRouter from "./modules/payments/payment.route";
-import paymentWebhookRouter from "./modules/payments/payment.webhook.route";
+import PaymentWebhookRouter from "./modules/payments/payment.webhook.route";
+import AnalyticsRouter from "./modules/analytics/analytics.route";
 
 const app = express();
 
@@ -31,7 +32,7 @@ app.use(
   express.raw({
     type: "application/json",
   }),
-  paymentWebhookRouter,
+  PaymentWebhookRouter,
 );
 
 
@@ -46,13 +47,15 @@ app.get("/api/v1", (_req: Request, res: Response) => {
 });
 
 // Routes
-app.use("/api/v1/auth", authRouter);
-app.use("/api/v1/hotels", hotelRouter);
+app.use("/api/v1/auth", AuthRouter);
+app.use("/api/v1/hotels", HotelRouter);
 app.use("/api/v1/rooms", RoomRouter);
-app.use("/api/v1/hotel-members", HotelMemberRouter);
+app.use("/api/v1/members", HotelMemberRouter);
 app.use("/api/v1/guests", GuestRouter);
 app.use("/api/v1/bookings", BookingRouter);
 app.use("/api/v1/payments", PaymentRouter);
+app.use("/api/v1/analytics", AnalyticsRouter);
+
 // not found route
 app.use(notFound);
 
