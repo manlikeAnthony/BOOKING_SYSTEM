@@ -7,7 +7,7 @@ import helmet from "helmet";
 import xss from "xss-clean";
 import rateLimiter from "express-rate-limit";
 import mongoSanitize from "express-mongo-sanitize";
-
+import {RedisStore} from "rate-limit-redis";
 
 import { notFound } from "./middlewares/not-found";
 import { errorHandlerMiddleware } from "./middlewares/error-handler";

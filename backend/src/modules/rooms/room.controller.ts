@@ -2,7 +2,6 @@ import { Request, Response } from "express";
 import {
   createRoomService,
   getAllRoomsService,
-  getRoomsByHotelIdService,
   updateRoomService,
   deleteRoomService,
   deactivateRoomsByHotelIdService,
@@ -46,18 +45,6 @@ export const getAllRooms = async (req: Request<HotelParams>, res: Response) => {
   );
 };
 
-export const getRoomsByHotelId = async (req: Request<HotelParams>, res: Response) => {
-    const hotelId = req.params.hotelId;
-    const rooms = await getRoomsByHotelIdService(hotelId);
-
-    res.status(HttpCodes.OK).json(
-        successResponse({
-            message: "Rooms retrieved successfully",
-            data: rooms,
-            code: AppCodes.ROOMS_RETRIEVED,
-        }),
-    );
-};
 
 export const getSingleRoom = async (req: Request<HotelParams>, res: Response) => {
   const hotelId = req.params.hotelId;
